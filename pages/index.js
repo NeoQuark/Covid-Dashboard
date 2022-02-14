@@ -1,7 +1,9 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import Line from '../components/Line'
+import Pie from '../components/Pie'
 
-export default function Home() {
+export default function Home({timeline, lineData, pieData}) {
   return (
     <div>
       <Head>
@@ -10,12 +12,84 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="flex h-screen">
-        <h1 className="flex m-auto text-5xl font-bold">Covid Dashboard</h1>
+      <main className="flex-col p-10 space-y-20">
+        <h1 className="mx-auto text-5xl font-bold">World Situation</h1>
+        <div className='flex w-3/4 mx-auto p-12 space-y-20 xl:space-y-0 rounded-2xl xl:shadow-2xl'>
+          <div className='flex-col w-1/2'>
+            <h2 className='text-3xl font-bold text-center'>7 last days</h2>
+            <div className='h-96'>
+              <Line data={lineData}/>
+            </div>
+          </div>
+          <div className='flex-col w-1/2'>
+            <h2 className='text-3xl font-bold text-center'>Global Ratio</h2>
+            <div className='h-96'>
+              <Pie data={pieData}/>
+            </div>
+          </div>
+        </div>
+        {/* <div className='flex-row w-full'>
+          <div className='flex-row w-full'>
+            <h2 className='text-2xl font-bold text-center'>7 last days</h2>
+            <div className='h-60 w-full'>
+              <Line data={lineData}/>
+            </div>
+          </div>
+          <div className='flex-row w-full'>
+            <h2 className='text-2xl font-bold text-center'>Global Ratio</h2>
+            <div className='h-60 w-full'>
+              <Pie data={pieData}/>
+            </div>
+          </div>
+        </div> */}
       </main>
 
       <footer>
       </footer>
     </div>
   )
+}
+
+export async function getStaticProps(context) {
+  const timeline = await fetch('https://corona-api.com/timeline').then(res => res.json().then(data => data.data.splice(0, 7)));
+  const countries = await fetch('https://corona-api.com/countries').then(res => res.json().then(data => data.data));
+  
+  const lineData = await [
+    {
+      id: "confirmed",
+      label: "Confirmed",
+      color: "#ca8a04",
+      data: timeline.map(day => ({x: day.date, y: day.new_confirmed}))
+    },
+    {
+      id: "deaths",
+      label: "Deaths",
+      color: "#dc2626",
+      data: timeline.map(day => ({x: day.date, y: day.new_deaths}))
+    }
+  ]
+  
+  const pieData = await [
+    {
+      id: "confirmed",
+      label: "Confirmed",
+      color: "#dc2626",
+      value: timeline[0].confirmed
+    },
+    {
+      id: "deaths",
+      label: "Deaths",
+      color: "#ca8a04",
+      value: timeline[0].deaths
+    }
+  ]
+
+  return {
+    props: {
+      timeline,
+      countries,
+      lineData,
+      pieData
+    }
+  }
 }
